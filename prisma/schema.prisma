@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PersonRole {
+  SUBJECT      // Υπόχρεος
+  SPOUSE
+  OTHER
+}
+
+enum SectionType {
+  INCOME
+  SECURITY
+  BANK_ACCOUNT
+  CASH
+  REAL_ESTATE
+  SAFE_DEPOSIT
+  INSURANCE
+  OTHER
+}
+
+model Person {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  father    String?
+  role      PersonRole
+
+  declarations Declaration[]
+
+  createdAt DateTime @default(now())
+}
+
+model Declaration {
+  id                 String   @id @default(uuid())
+  declarationNumber  String   @unique
+  year               Int
+  submittedAt        DateTime?
+
+  personId String
+  person   Person   @relation(fields: [personId], references: [id])
+
+  sections SectionEntry[]
+
+  // Aggregated totals for easy querying
+  totalIncome      Decimal   @default(0)
+  totalDeposits    Decimal   @default(0)
+  totalInvestments Decimal   @default(0)
+  realEstateCount  Int       @default(0)
+  vehicleCount     Int       @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([year])
+}
+
+model SectionEntry {
+  id String @id @default(uuid())
+
+  declarationId String
+  declaration   Declaration @relation(fields: [declarationId], references: [id])
+
+  sectionType SectionType
+
+  // Who owns this row (subject / spouse)
+  holderRole PersonRole
+
+  /**
+   * Flexible payload depending on sectionType.
+   * Examples:
+   * - income: { amount, currency, incomeType, notes }
+   * - security: { title, quantity, acquisitionValue, valuation, broker }
+   * - realEstate: { country, city, type, sqm, yearAcquired }
+   */
+  data Json
+
+  // Optional standardized monetary fields for querying
+  amount        Decimal?
+  currency      String?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+
+  @@index([sectionType])
+}
