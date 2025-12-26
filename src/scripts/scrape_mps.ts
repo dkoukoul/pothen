@@ -53,63 +53,44 @@ async function main() {
         console.log(`\n=== Processing Party: ${partyName} (${key}) ===`);
         console.log(`URL: ${url}`);
 
-        let currentUrl = url;
-        let pageCount = 0;
+        let pageCount = 1;
+        let hasMore = true;
 
         try {
-            while (currentUrl) {
-                pageCount++;
+            while (hasMore) {
+                // Construct URL with pageNo
+                const urlObj = new URL(url);
+                urlObj.searchParams.set('pageNo', pageCount.toString());
+                const currentUrl = urlObj.toString();
+                
+                // console.log(`Fetching page ${pageCount}: ${currentUrl}`);
                 const $ = await fetchPage(currentUrl);
                 
-                // Selector for MP rows.
                 const rows = $('table.grid tbody tr');
                 
                 if (rows.length === 0) {
-                    console.log(`No rows found on page ${pageCount} for party ${partyName}.`);
+                    console.log(`No rows found on page ${pageCount}. Stopping party processing.`);
+                    hasMore = false;
+                    break;
                 } else {
                      console.log(`Found ${rows.length} rows on page ${pageCount}.`);
                 }
 
                 await processRows($, rows, partyName);
 
-                // Pagination: Look for a "Next" link. 
-                // We iterate over all links in the paging container to find the one that looks like "Next"
-                let nextLinkText: string | undefined;
+                // Check if we should continue:
+                // If fewer rows than expected (pagination limit usually 10-20?), maybe stop?
+                // But safer to just check if rows exist.
+                // ALSO check if there is a "next" indicator or just keep going until empty?
+                // The user suggestion implies just iterating until no MPs.
                 
-                const pagingLinks = $('.in_paging a, .paging a');
-                pagingLinks.each((i, el) => {
-                    const t = $(el).text().trim();
-                    if (t === '>' || t === 'Επόμενη' || t === 'Next' || t.includes('Επόμενη') || t.includes('>')) {
-                        nextLinkText = $(el).attr('href');
-                        return false; // break
-                    }
-                });
-
-                if (!nextLinkText) {
-                    // Fallback: try to find any link with text ">" globally if specific container failed
-                     const globNext = $('a').filter((i, el) => $(el).text().trim() === '>').first();
-                     if (globNext.length) nextLinkText = globNext.attr('href');
-                }
-
-                if (nextLinkText) {
-                    if (nextLinkText.startsWith('http')) {
-                        currentUrl = nextLinkText;
-                    } else {
-                        // Check if it starts with / or ?
-                        if (nextLinkText.startsWith('/')) {
-                             currentUrl = new URL(nextLinkText, BASE_URL).toString();
-                        } else {
-                            // Relative to current? Or Base? Usually root relative on this site but let's be safe
-                             currentUrl = new URL(nextLinkText, BASE_URL).toString();
-                        }
-                    }
-                    console.log(`Next page found: ${currentUrl}`);
-                } else {
-                    console.log("No next page found. Finishing party.");
-                    currentUrl = '';
+                // Safety break to prevent infinite loops if structure changes
+                if (pageCount > 50) {
+                    console.warn("Reached page 50 limit. stopping.");
+                    hasMore = false;
                 }
                 
-                if (pageCount > 20) break;
+                pageCount++;
             }
         } catch(e) {
             console.error(`Error processing party ${partyName}:`, e);
