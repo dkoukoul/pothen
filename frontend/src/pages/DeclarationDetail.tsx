@@ -16,7 +16,7 @@ export default function DeclarationDetail() {
 
     // Group sections
     const incomes = details.sections.filter((s: any) => s.sectionType === 'INCOME');
-    const realEstate = details.sections.filter((s: any) => s.sectionType === 'REAL_ESTATE');
+    // const realEstate = details.sections.filter((s: any) => s.sectionType === 'REAL_ESTATE');
     const deposits = details.sections.filter((s: any) => s.sectionType === 'BANK_ACCOUNT');
     const investments = details.sections.filter((s: any) => s.sectionType === 'SECURITY');
 
