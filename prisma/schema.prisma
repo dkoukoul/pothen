@@ -31,6 +31,9 @@ model Person {
   father    String?
   role      PersonRole
 
+  party     String?
+  region    String?
+
   declarations Declaration[]
 
   createdAt DateTime @default(now())

@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "db:init": "bun src/scripts/init-db.ts"
+    "db:init": "bun src/scripts/init-db.ts",
+    "db:push": "prisma db push"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +13,8 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "6",
+    "@types/cheerio": "^1.0.0",
+    "cheerio": "^1.1.2",
     "cors": "^2.8.5",
     "hono": "^4.11.2",
     "pdf-parse": "^1.1.1",
